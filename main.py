@@ -5,20 +5,11 @@ token = os.environ.get("FB_PAGE_TOKEN")
 page_id = os.environ.get("FB_PAGE_ID")
 
 print(f"Token exists: {bool(token)}")
-
-# Auto find page
-if token and not page_id:
-    r = requests.get(f"https://graph.facebook.com/v20.0/me/accounts?access_token={token}")
-    print(f"Pages response: {r.text[:500]}")
-    data = r.json().get("data", [])
-    if data:
-        page_id = data[0]["id"]
-        token = data[0]["access_token"]
-        print(f"Found Page: {data[0]['name']}")
+print(f"Page ID: {page_id}")
 
 if not token or not page_id:
-    print("ERROR: No token - add FB_PAGE_TOKEN secret")
-    exit()
+    print("ERROR: Missing token or page_id")
+    exit(1)
 
 message = """Chiamaka waited in village for Obinna who went to Lagos...
 
@@ -36,5 +27,7 @@ url = f"https://graph.facebook.com/v20.0/{page_id}/feed"
 res = requests.post(url, data={"message": message, "access_token": token})
 print(f"POST RESULT: {res.text}")
 
-if "id" in res.json():
-    print("SUCCESS POSTED TO FACEBOOK!")
+if res.status_code == 200 and "id" in res.json():
+    print("SUCCESS! POSTED TO FACEBOOK!")
+else:
+    print("FAILED - Check token permissions")
