@@ -1,45 +1,40 @@
-import os, random, requests
-from datetime import datetime
+import os
+import requests
 
-# 7 types of African romance
-stories = {
- "Village": "Chiamaka waited in village for Obinna who went to Lagos with promise. Today he returns with story...",
- "City Lagos": "Lagos traffic could not stop their love. Amaka meets Chinedu in Danfo...",
- "Japa": "He japa to Canada, she stayed in Onitsha. But love no get visa wahala...",
- "School": "SS3 love that started with extra lesson. Now they want to marry...",
- "Rich vs Poor": "Billionaire son fall in love with poor girl selling akara. Family say no...",
- "Arranged": "Parents arranged marriage, but they find real love inside...",
- "Facebook DM": "He slid into her DM 'hi dear'. Now 2 years later, wedding..."
-}
+token = os.environ.get("FB_PAGE_TOKEN")
+page_id = os.environ.get("FB_PAGE_ID")
 
-today_type = random.choice(list(stories.keys()))
-story = stories[today_type]
-time_now = datetime.now().strftime("%d %b %Y %I:%M%p")
+# If page ID not set, auto find it
+if token and not page_id:
+    r = requests.get(f"https://graph.facebook.com/v18.0/me/accounts?access_token={token}")
+    print("Pages:", r.text)
+    data = r.json().get("data", [])
+    if data:
+        page_id = data[0]["id"]
+        token = data[0]["access_token"]
 
-print(f"❤️ Iam Chimaco Studio Alive!")
-print(f"Type: {today_type}")
-print(f"Time: {time_now}")
-print(f"Story: {story}")
+message = """Chiamaka waited in village for Obinna who went to Lagos...
 
-# FACEBOOK PAGE POSTING (needs FB_PAGE_TOKEN secret)
-fb_token = os.getenv("FB_PAGE_TOKEN")
-fb_page_id = os.getenv("FB_PAGE_ID", "") # we will get this
+3 months no call. Her mother says "Marry Chief's son!"
 
-if fb_token:
-    try:
-        # Get Page ID if not set
-        if not fb_page_id:
-            r = requests.get(f"https://graph.facebook.com/v18.0/me/accounts?access_token={fb_token}")
-            print(f"Pages: {r.text[:500]}")
-        else:
-            message = f"❤️ AFRICAN ROMANCE - {today_type.upper()} ❤️\n\n{story}\n\n#IamChimaco #AfricanLove #Nollywood #LoveStory\n\nPosted {time_now} - 3x daily"
-            url = f"https://graph.facebook.com/v18.0/{fb_page_id}/feed"
-            res = requests.post(url, data={"message": message, "access_token": fb_token})
-            print(f"Facebook post result: {res.text}")
-    except Exception as e:
-        print(f"FB error: {e}")
+But today, bike man brings letter...
+
+Obinna is back, but not alone 😭
+
+PART 1 - Should I continue? Comment YES!
+
+#IamChimaco #Nollywood #NigerianStory"""
+
+if token and page_id:
+    url = f"https://graph.facebook.com/v18.0/{page_id}/feed"
+    res = requests.post(url, data={"message": message, "access_token": token})
+    print("POST RESULT:", res.text)
+    if "id" in res.text:
+        print("SUCCESS POSTED TO FACEBOOK!")
+    else:
+        print("Failed - check token")
 else:
-    print("No FB_PAGE_TOKEN yet - add it in Secrets to auto post")
-
-# YOUTUBE posting comes next after FB works
-print("✅ Robot finished - ready for YouTube next")
+    print("No token or page_id found")
+    if token:
+        r = requests.get(f"https://graph.facebook.com/v18.0/me/accounts?access_token={token}")
+        print(r.text)
